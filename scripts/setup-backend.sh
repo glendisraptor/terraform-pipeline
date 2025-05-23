@@ -1,28 +1,50 @@
 #!/bin/bash
 
-# Setup script for Terraform backend resources
 set -e
 
-BUCKET_NAME="your-terraform-state-bucket-sgdsygf43reygh"
+BUCKET_NAME="terraform-state-bucket-345676654"
 TABLE_NAME="terraform-state-locks"
-REGION="us-east-1"
+REGION="af-south-1"
 
 echo "🚀 Setting up Terraform backend resources..."
 
-# Create S3 bucket for state storage
-echo "📦 Creating S3 bucket: $BUCKET_NAME"
-aws s3 mb s3://$BUCKET_NAME --region $REGION
+# Check if the bucket exists and is owned by you
+bucket_exists=$(aws s3api head-bucket --bucket "$BUCKET_NAME" 2>&1 || true)
+
+if echo "$bucket_exists" | grep -q '403'; then
+    echo "❌ Bucket exists but is owned by someone else. Exiting."
+    exit 1
+elif echo "$bucket_exists" | grep -q '404'; then
+    echo "📦 Bucket does not exist. Creating bucket: $BUCKET_NAME"
+    if [ "$REGION" = "us-east-1" ]; then
+        aws s3api create-bucket --bucket $BUCKET_NAME --region $REGION
+    else
+        aws s3api create-bucket \
+            --bucket $BUCKET_NAME \
+            --region $REGION \
+            --create-bucket-configuration LocationConstraint=$REGION
+    fi
+else
+    echo "ℹ️ Bucket already exists and is owned by you."
+    # Uncomment below to delete and recreate the bucket
+    # echo "⚠️ Deleting existing bucket..."
+    # aws s3 rb s3://$BUCKET_NAME --force
+    # echo "🆕 Recreating bucket..."
+    # (same create-bucket logic as above)
+fi
 
 # Enable versioning
 echo "🔄 Enabling S3 bucket versioning..."
 aws s3api put-bucket-versioning \
     --bucket $BUCKET_NAME \
-    --versioning-configuration Status=Enabled
+    --versioning-configuration Status=Enabled \
+    --region $REGION
 
 # Enable encryption
 echo "🔐 Enabling S3 bucket encryption..."
 aws s3api put-bucket-encryption \
     --bucket $BUCKET_NAME \
+    --region $REGION \
     --server-side-encryption-configuration '{
         "Rules": [{
             "ApplyServerSideEncryptionByDefault": {
@@ -35,6 +57,7 @@ aws s3api put-bucket-encryption \
 echo "🛡️  Blocking public access..."
 aws s3api put-public-access-block \
     --bucket $BUCKET_NAME \
+    --region $REGION \
     --public-access-block-configuration \
         BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
@@ -45,7 +68,7 @@ aws dynamodb create-table \
     --attribute-definitions AttributeName=LockID,AttributeType=S \
     --key-schema AttributeName=LockID,KeyType=HASH \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --region $REGION
+    --region $REGION || echo "ℹ️ DynamoDB table $TABLE_NAME already exists."
 
 echo "✅ Backend setup complete!"
 echo "📝 Update your terraform backend configuration with:"

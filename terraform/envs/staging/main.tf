@@ -9,9 +9,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "your-terraform-state-bucket" # Replace with your state bucket
-    key    = "staging/terraform.tfstate"   # Only this line changes
-    region = "us-east-1"
+    bucket = "terraform-state-bucket-345676654" # Replace with your state bucket
+    key    = "staging/terraform.tfstate"        # Only this line changes
+    region = "af-south-1"
 
     # Enable state locking
     dynamodb_table = "terraform-state-locks"
@@ -20,7 +20,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "af-south-1"
 
   default_tags {
     tags = {
