@@ -208,9 +208,10 @@ jobs:
       - name: Terraform Apply
         if: github.event.inputs.action != 'destroy'
         run: |
-          terraform apply -var="environment=${{ needs.setup.outputs.environment }}" -no-color tfplan
+          terraform apply -no-color tfplan
           echo "✅ Terraform apply completed"
         working-directory: ${{ needs.setup.outputs.tf_path }}
+
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
