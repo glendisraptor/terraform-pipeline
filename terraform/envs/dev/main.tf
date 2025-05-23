@@ -40,7 +40,7 @@ module "app_bucket" {
   source = "../../modules/s3"
 
   environment = local.environment
-  bucket_name = "myapp-data"
+  bucket_name = "myapp-data-${timestamp()}"
 }
 
 # Logs bucket
@@ -48,7 +48,7 @@ module "logs_bucket" {
   source = "../../modules/s3"
 
   environment = local.environment
-  bucket_name = "myapp-logs"
+  bucket_name = "myapp-logs-${timestamp()}"
 }
 
 # Static assets bucket
@@ -56,5 +56,5 @@ module "assets_bucket" {
   source = "../../modules/s3"
 
   environment = local.environment
-  bucket_name = "myapp-assets"
+  bucket_name = "myapp-assets-${timestamp()}"
 }
