@@ -1,5 +1,6 @@
 name: Terraform Multi-Environment Pipeline
 on:
+
   # Automatic deployment triggers
   push:
     branches: [dev, staging]
