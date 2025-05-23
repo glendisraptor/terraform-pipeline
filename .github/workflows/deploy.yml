@@ -126,13 +126,12 @@ jobs:
         id: plan
         run: |
           if [[ "${{ github.event.inputs.action }}" == "destroy" ]]; then
-            terraform plan -destroy -detailed-exitcode -no-color -out=tfplan
+            terraform plan -destroy -var="environment=${{ needs.setup.outputs.environment }}" -detailed-exitcode -no-color -out=tfplan
           else
-            terraform plan -detailed-exitcode -no-color -out=tfplan
+            terraform plan -var="environment=${{ needs.setup.outputs.environment }}" -detailed-exitcode -no-color -out=tfplan
           fi
         working-directory: ${{ needs.setup.outputs.tf_path }}
         continue-on-error: true
-
       - name: Check Plan Results
         run: |
           case "${{ steps.plan.outputs.exitcode }}" in
@@ -209,14 +208,14 @@ jobs:
       - name: Terraform Apply
         if: github.event.inputs.action != 'destroy'
         run: |
-          terraform apply -no-color tfplan
+          terraform apply -var="environment=${{ needs.setup.outputs.environment }}" -no-color tfplan
           echo "✅ Terraform apply completed"
         working-directory: ${{ needs.setup.outputs.tf_path }}
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
         run: |
-          terraform destroy -auto-approve -no-color
+          terraform destroy -auto-approve -no-color -var="environment=${{ needs.setup.outputs.environment }}"
           echo "✅ Terraform destroy completed"
         working-directory: ${{ needs.setup.outputs.tf_path }}
 
