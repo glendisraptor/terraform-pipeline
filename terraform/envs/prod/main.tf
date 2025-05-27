@@ -9,9 +9,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "your-terraform-state-bucket" # Replace with your state bucket
-    key    = "dev/terraform.tfstate"
-    region = "us-east-1"
+    bucket = "terraform-state-bucket-345676654" # Replace with your state bucket
+    key    = "prod/terraform.tfstate"
+    region = "af-south-1"
 
     # Enable state locking
     dynamodb_table = "terraform-state-locks"
@@ -20,7 +20,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "af-south-1"
 
   default_tags {
     tags = {
@@ -32,7 +32,13 @@ provider "aws" {
 }
 
 locals {
-  environment = "dev" # Only line that changes per environment
+  environment = "prod" # Only line that changes per environment
+}
+
+resource "random_string" "suffix" {
+  length  = 6
+  upper   = false
+  special = false
 }
 
 # Application data bucket
@@ -40,7 +46,7 @@ module "app_bucket" {
   source = "../../modules/s3"
 
   environment = local.environment
-  bucket_name = "myapp-data"
+  bucket_name = "myapp-data-${random_string.suffix.result}"
 }
 
 # Logs bucket
@@ -48,7 +54,7 @@ module "logs_bucket" {
   source = "../../modules/s3"
 
   environment = local.environment
-  bucket_name = "myapp-logs"
+  bucket_name = "myapp-logs-${random_string.suffix.result}"
 }
 
 # Static assets bucket
@@ -56,5 +62,5 @@ module "assets_bucket" {
   source = "../../modules/s3"
 
   environment = local.environment
-  bucket_name = "myapp-assets"
+  bucket_name = "myapp-assets-${random_string.suffix.result}"
 }
